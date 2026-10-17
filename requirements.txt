@@ -1,0 +1,15 @@
+sqlalchemy
+fastapi
+uvicorn
+litellm
+python-dotenv
+pymupdf
+requests
+numpy
+scikit-learn
+sentence-transformers
+chromadb
+langchain-text-splitters
+langgraph
+langchain-core
+tavily-python
