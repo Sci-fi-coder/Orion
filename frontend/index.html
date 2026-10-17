@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORION // Multi-Agent Research Intelligence Terminal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Terminal Background Layers -->
+  <div class="bg-hex-grid" aria-hidden="true"></div>
+  
+  <div class="scanline scanline-1" aria-hidden="true"></div>
+  <div class="scanline scanline-2" aria-hidden="true"></div>
+
+  <div class="particle-container" aria-hidden="true">
+    <div class="particle p-1"></div>
+    <div class="particle p-2"></div>
+    <div class="particle p-3"></div>
+    <div class="particle p-4"></div>
+    <div class="particle p-5"></div>
+    <div class="particle p-6"></div>
+    <div class="particle p-7"></div>
+    <div class="particle p-8"></div>
+    <div class="particle p-9"></div>
+    <div class="particle p-10"></div>
+  </div>
+
+  <div class="terminal-layout">
+    <!-- LEFT SIDEBAR (280px fixed) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="brand-logo-hex">
+            <svg class="hex-svg" viewBox="0 0 100 115" width="34" height="39">
+              <polygon points="50,2 96,27 96,87 50,113 4,87 4,27" class="hex-outer" />
+              <polygon points="50,22 80,38 80,76 50,92 20,76 20,38" class="hex-inner" />
+              <circle cx="50" cy="57" r="8" class="hex-core" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <div class="brand-title">ORION</div>
+            <div class="brand-sub">RESEARCH INTEL</div>
+          </div>
+        </div>
+        <div class="status-indicator" id="systemStatusBadge" title="Backend connection status">
+          <span class="status-dot blinking" id="systemStatusDot"></span>
+          <span class="status-label" id="systemStatusText">SYS: CONNECTING...</span>
+        </div>
+      </div>
+
+      <div class="sidebar-action">
+        <button type="button" class="btn btn-primary btn-block" id="newResearchBtn">
+          <span class="btn-icon">+</span> NEW RESEARCH
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>// ACTIVE WORKSPACE</span>
+          <span class="badge badge-dim" id="workspaceBadge">ID: 1</span>
+        </div>
+        <div class="workspace-card">
+          <div class="workspace-info">
+            <span class="info-label">TARGET WS:</span>
+            <span class="info-val" id="activeWsLabel">Workspace #1</span>
+          </div>
+          <div class="workspace-sub">
+            <span id="papersCountLabel">Papers ingested: --</span>
+          </div>
+          <div class="workspace-papers-container" id="sidebarPapersList">
+            <div class="empty-list-note">Awaiting paper index...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>// AGENT SWARM LEGEND</span>
+        </div>
+        <ul class="agent-legend-list">
+          <li class="agent-item">
+            <span class="hex-badge badge-coordinator">CO</span>
+            <div class="agent-meta">
+              <span class="agent-name">Coordinator</span>
+              <span class="agent-role">Decomposition & Strategy</span>
+            </div>
+          </li>
+          <li class="agent-item">
+            <span class="hex-badge badge-researcher">RE</span>
+            <div class="agent-meta">
+              <span class="agent-name">Researcher</span>
+              <span class="agent-role">ArXiv Retrieval & Vector DB</span>
+            </div>
+          </li>
+          <li class="agent-item">
+            <span class="hex-badge badge-synthesizer">SY</span>
+            <div class="agent-meta">
+              <span class="agent-name">Synthesizer</span>
+              <span class="agent-role">Citation & Stance Matrix</span>
+            </div>
+          </li>
+          <li class="agent-item">
+            <span class="hex-badge badge-critic">CR</span>
+            <div class="agent-meta">
+              <span class="agent-name">Critic</span>
+              <span class="agent-role">Quality Gate & Re-planning</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-section session-stats-section">
+        <div class="section-title">
+          <span>// SESSION TELEMETRY</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-number" id="statQueriesRun">0</div>
+            <div class="stat-label">QUERIES RUN</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number" id="statAvgConfidence">0.00</div>
+            <div class="stat-label">AVG CONFIDENCE</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sys-meta">PORT: 8000 | PROTOCOL: REST/JSON</div>
+        <div class="sys-meta">CHROMA_DB // LANGGRAPH ENGINE</div>
+      </div>
+    </aside>
+
+    <!-- MAIN PANEL -->
+    <main class="main-panel">
+      <!-- TOP STATUS / META BAR -->
+      <header class="top-nav">
+        <div class="top-nav-left">
+          <span class="terminal-prefix">TERMINAL://</span>
+          <span class="terminal-path">ORION/CORE/SYNTHESIS_V1</span>
+        </div>
+        <div class="top-nav-right">
+          <span class="nav-clock" id="navClock">00:00:00 UTC</span>
+          <span class="nav-env-tag">LAB_ENV: PROD</span>
+        </div>
+      </header>
+
+      <div class="main-content-scroll">
+        <!-- RESEARCH CONTROL FORM -->
+        <section class="research-form-card">
+          <form id="researchForm" onsubmit="return false;">
+            <div class="input-group-topic">
+              <label for="topicInput" class="field-label">
+                <span class="prompt-arrow">&gt;</span> ENTER RESEARCH TOPIC / HYPOTHESIS:
+              </label>
+              <div class="topic-input-wrapper">
+                <textarea 
+                  id="topicInput" 
+                  rows="2" 
+                  placeholder="e.g., Quantum error correction thresholds in surface codes with biased noise..."
+                  required
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="form-controls-bar">
+              <div class="controls-left">
+                <div class="control-item">
+                  <label for="workspaceIdInput" class="control-label">WORKSPACE ID:</label>
+                  <input 
+                    type="number" 
+                    id="workspaceIdInput" 
+                    value="1" 
+                    min="1" 
+                    max="9999" 
+                    class="form-input-number"
+                  />
+                </div>
+
+                <div class="control-item">
+                  <label class="toggle-control" for="devilAdvocateToggle">
+                    <span class="control-label">DEVIL'S ADVOCATE:</span>
+                    <input type="checkbox" id="devilAdvocateToggle" class="switch-checkbox" />
+                    <span class="switch-ui"></span>
+                    <span class="switch-status-text" id="daToggleLabel">OFF</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="controls-right">
+                <button type="submit" class="btn btn-execute" id="runResearchBtn">
+                  <span class="btn-text">[⚡ RUN RESEARCH]</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- TERMINAL ERROR BOX (Hidden by default) -->
+        <div class="terminal-error-box hidden" id="terminalErrorBox">
+          <div class="error-header">
+            <span class="error-title">⚠ SYSTEM EXCEPTION DETECTED</span>
+            <button type="button" class="error-close-btn" id="errorCloseBtn">&times;</button>
+          </div>
+          <div class="error-body" id="errorMessageText">
+            An unknown error occurred while communicating with the backend.
+          </div>
+        </div>
+
+        <!-- LOADING STATE (HexSpinner) -->
+        <div class="loading-state-container hidden" id="loadingStateContainer">
+          <div class="hex-spinner-wrapper">
+            <div class="hex-spinner" id="hexSpinner">
+              <div class="hex-dot dot-1" style="--i:0"></div>
+              <div class="hex-dot dot-2" style="--i:1"></div>
+              <div class="hex-dot dot-3" style="--i:2"></div>
+              <div class="hex-dot dot-4" style="--i:3"></div>
+              <div class="hex-dot dot-5" style="--i:4"></div>
+              <div class="hex-dot dot-6" style="--i:5"></div>
+              <div class="hex-center-glyph">⚛</div>
+            </div>
+          </div>
+          <div class="loading-status-text" id="loadingStatusText">
+            COORDINATOR AGENT DECOMPOSING TOPIC...
+          </div>
+          <div class="loading-subtext">
+            Executing multi-agent graph traversal across ArXiv & VectorStore (estimated 15-60s)
+          </div>
+          <div class="loading-progress-bar">
+            <div class="loading-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- WELCOME SCREEN (Shown when no active query result) -->
+        <div class="welcome-screen" id="welcomeScreen">
+          <div class="welcome-hex-graphic">
+            <svg class="large-hex-svg" viewBox="0 0 200 230" width="120" height="138">
+              <polygon points="100,6 190,56 190,166 100,216 10,166 10,56" class="welcome-hex-outer" />
+              <polygon points="100,28 170,68 170,154 100,194 30,154 30,68" class="welcome-hex-mid" />
+              <polygon points="100,50 150,79 150,142 100,171 50,142 50,79" class="welcome-hex-inner" />
+              <circle cx="100" cy="111" r="16" class="welcome-hex-core" />
+            </svg>
+          </div>
+          <h1 class="welcome-title">ORION RESEARCH INTELLIGENCE</h1>
+          <p class="welcome-subtitle">
+            Autonomous Multi-Agent Synthesis, Stance Classification & Adversarial Verification
+          </p>
+
+          <div class="suggested-queries-card">
+            <div class="suggested-title">// SUGGESTED RESEARCH PROMPTS</div>
+            <div class="suggested-chips-grid">
+              <button type="button" class="query-chip" data-query="Quantum error correction thresholds in surface codes with biased noise">
+                <span class="chip-prefix">&gt;</span> Quantum error correction thresholds in surface codes
+              </button>
+              <button type="button" class="query-chip" data-query="Room-temperature superconductivity mechanisms in hydrides under high pressure">
+                <span class="chip-prefix">&gt;</span> Room-temperature superconductivity mechanisms in hydrides
+              </button>
+              <button type="button" class="query-chip" data-query="Geometric deep learning and graph neural networks for molecular docking accuracy">
+                <span class="chip-prefix">&gt;</span> Graph neural networks for molecular docking accuracy
+              </button>
+              <button type="button" class="query-chip" data-query="Post-quantum lattice-based cryptography side-channel attack vulnerabilities">
+                <span class="chip-prefix">&gt;</span> Post-quantum lattice-based cryptography vulnerabilities
+              </button>
+            </div>
+          </div>
+
+          <div class="system-capabilities">
+            <div class="cap-item">
+              <span class="cap-glyph">[+]</span> LangGraph Multi-Agent Cycle
+            </div>
+            <div class="cap-item">
+              <span class="cap-glyph">[+]</span> ArXiv & Semantic Vector Mining
+            </div>
+            <div class="cap-item">
+              <span class="cap-glyph">[+]</span> Empirical Evidence Grading
+            </div>
+            <div class="cap-item">
+              <span class="cap-glyph">[+]</span> Devil's Advocate Counter-Analysis
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULTS PANEL (Shown after research completes) -->
+        <div class="results-panel hidden" id="resultsPanel">
+          <!-- TOP TELEMETRY STRIP -->
+          <div class="results-telemetry-card">
+            <div class="telemetry-header">
+              <div class="telemetry-topic-display">
+                <span class="telemetry-tag">// SYNTHESIZED HYPOTHESIS:</span>
+                <span class="telemetry-topic-text" id="resultTopicText"></span>
+              </div>
+              <div class="telemetry-quick-metrics">
+                <span class="metric-pill" id="resultChunksPill">CHUNKS: 0</span>
+                <span class="metric-pill" id="resultWebPill">WEB SOURCES: 0</span>
+                <span class="metric-pill" id="resultReplansPill">REPLANS: 0</span>
+              </div>
+            </div>
+
+            <!-- CONFIDENCE METER -->
+            <div class="confidence-meter-container">
+              <div class="confidence-header">
+                <span class="confidence-label">CONFIDENCE INDEX:</span>
+                <span class="confidence-value-text" id="confidenceValueText">0.00</span>
+                <span class="confidence-tier-badge" id="confidenceTierBadge">ANALYZING</span>
+              </div>
+              <div class="confidence-bar-track">
+                <div class="confidence-bar-fill" id="confidenceBarFill" style="width: 0%;"></div>
+              </div>
+              <div class="confidence-bar-scale">
+                <span>0.0 [LOW]</span>
+                <span>0.4 [MODERATE]</span>
+                <span>0.7 [HIGH]</span>
+                <span>1.0 [ROBUST]</span>
+              </div>
+            </div>
+
+            <!-- STANCE & EVIDENCE PILL CLUSTERS -->
+            <div class="classification-clusters-grid">
+              <div class="cluster-block">
+                <div class="cluster-title">// STANCE DISTRIBUTION:</div>
+                <div class="pills-row" id="stancePillsRow">
+                  <span class="pill pill-stance-supports" id="pillSupports">SUPPORTS: 0</span>
+                  <span class="pill pill-stance-contradicts" id="pillContradicts">CONTRADICTS: 0</span>
+                  <span class="pill pill-stance-neutral" id="pillNeutral">NEUTRAL: 0</span>
+                </div>
+              </div>
+
+              <div class="cluster-block">
+                <div class="cluster-title">// EVIDENCE GRADES:</div>
+                <div class="pills-row" id="evidencePillsRow">
+                  <span class="pill pill-evidence-exp" id="pillExperimental">EXPERIMENTAL: 0</span>
+                  <span class="pill pill-evidence-theo" id="pillTheoretical">THEORETICAL: 0</span>
+                  <span class="pill pill-evidence-survey" id="pillSurvey">SURVEY: 0</span>
+                  <span class="pill pill-evidence-assert" id="pillAssertion">ASSERTION: 0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRIMARY SYNTHESIS ANSWER -->
+          <div class="synthesis-card">
+            <div class="card-bar">
+              <span class="card-title">// RESEARCH SYNTHESIS DOSSIER</span>
+              <span class="card-hint">Inline citations verified against vector context</span>
+            </div>
+            <div class="answer-content-body" id="answerContentBody">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- DEVIL'S ADVOCATE ACCORDION -->
+          <div class="devil-advocate-card" id="devilAdvocateCard">
+            <button type="button" class="da-header-toggle" id="daToggleBtn">
+              <div class="da-title-left">
+                <span class="da-icon">⚠</span>
+                <span class="da-title">DEVIL'S ADVOCATE COUNTER-ANALYSIS</span>
+                <span class="da-badge" id="daStatusBadge">EXPAND CRITIQUE</span>
+              </div>
+              <span class="da-caret" id="daCaret">▼</span>
+            </button>
+            <div class="da-body collapsed" id="daBody">
+              <div class="da-content" id="daContentText">
+                No counter-analysis available for this run. Enable Devil's Advocate mode to trigger adversarial evaluation.
+              </div>
+            </div>
+          </div>
+
+          <!-- REASONING TIMELINE -->
+          <div class="reasoning-card">
+            <div class="reasoning-header">
+              <div class="reasoning-title-group">
+                <span class="reasoning-title">// MULTI-AGENT REASONING PIPELINE</span>
+                <span class="reasoning-sub">4-Stage Graph Execution Audit</span>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" id="toggleReasoningBtn">
+                <span id="reasoningToggleIcon">▼</span> <span id="reasoningToggleText">HIDE REASONING</span>
+              </button>
+            </div>
+
+            <div class="reasoning-body" id="reasoningBody">
+              <!-- 4-Node Sequence Graph -->
+              <div class="timeline-nodes-track">
+                <div class="timeline-step step-coord">
+                  <div class="timeline-node">
+                    <span class="node-hex">CO</span>
+                  </div>
+                  <div class="node-details">
+                    <div class="node-name">1. COORDINATOR</div>
+                    <div class="node-summary" id="nodeCoordSummary">Plan generated</div>
+                  </div>
+                </div>
+
+                <div class="timeline-connector"></div>
+
+                <div class="timeline-step step-research">
+                  <div class="timeline-node">
+                    <span class="node-hex">RE</span>
+                  </div>
+                  <div class="node-details">
+                    <div class="node-name">2. RESEARCHER</div>
+                    <div class="node-summary" id="nodeResearchSummary">ArXiv papers fetched</div>
+                  </div>
+                </div>
+
+                <div class="timeline-connector"></div>
+
+                <div class="timeline-step step-synth">
+                  <div class="timeline-node">
+                    <span class="node-hex">SY</span>
+                  </div>
+                  <div class="node-details">
+                    <div class="node-name">3. SYNTHESIZER</div>
+                    <div class="node-summary" id="nodeSynthSummary">Claims synthesized</div>
+                  </div>
+                </div>
+
+                <div class="timeline-connector"></div>
+
+                <div class="timeline-step step-critic">
+                  <div class="timeline-node">
+                    <span class="node-hex">CR</span>
+                  </div>
+                  <div class="node-details">
+                    <div class="node-name">4. CRITIC</div>
+                    <div class="node-summary" id="nodeCriticSummary">Gate evaluation</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Raw Execution Log -->
+              <div class="raw-log-container">
+                <div class="raw-log-header">EXECUTION LOG STREAM:</div>
+                <div class="raw-log-list" id="rawLogList">
+                  <!-- Injected log rows -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RETRIEVED PAPERS ACCORDION (If present in run) -->
+          <div class="papers-retrieved-card" id="retrievedPapersCard">
+            <div class="papers-card-header">
+              <span class="papers-card-title">// RETRIEVED ARXIV CITATIONS FOR THIS QUERY</span>
+              <span class="badge badge-dim" id="retrievedPapersCount">0 PAPERS</span>
+            </div>
+            <div class="retrieved-papers-list" id="retrievedPapersList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
