@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+chroma_db/
+pdf_cache/
+orion.db
+*.db
+.venv/
+venv/
+node_modules/
